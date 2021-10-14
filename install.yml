@@ -1,0 +1,37 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Install needed packages"
+      pip:
+        requirements: '{{ playbook_dir }}/requirements.txt'
+        extra_args: '--user'
+
+    - name: "Create paths we are going to need"
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: true
+      with_items:
+        - '~/.config/systemd/user'
+        - '~/bin'
+
+    - name: "Install watch.py to ~/bin/"
+      copy:
+        src: src/clip_watcher/watch_clipboard.py
+        dest: ~/bin/watch_clipboard
+        mode: '0755'
+      register: file_result
+
+    - name: "Install systemd service file"
+      template:
+        src: "watch-clipboard.service.j2"
+        dest: "~/.config/systemd/user/watch-clipboard.service"
+      register: service_result
+
+
+    - name: "Enable system service"
+      systemd:
+        name: "watch-clipboard"
+        scope: "user"
+        state: "{{ (file_result.changed or service_result.changed) | ternary('restart', 'started') }}"

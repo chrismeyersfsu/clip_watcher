@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch clipboard and write out to /tmp/clip
+
+[Service]
+ExecStart={{ lookup('env', 'HOME') }}/bin/watch_clipboard
+
+[Install]
+WantedBy=multi-user.target
